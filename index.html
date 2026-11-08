@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; worker-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="index, follow">
+<title>CrashTop round verifier</title>
+<meta name="description" content="Check a CrashTop round hash against the published hash chain and replay the results in your browser.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main class="wrap">
+
+  <header class="head">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <h1>CrashTop round verifier</h1>
+    </div>
+    <p class="lede">
+      Every round publishes a hash before betting closes and reveals its server seed after the bust.
+      This page rebuilds the hash chain from that hash and replays the results, entirely in your browser.
+      It has no database, no login, and no connection to the game server.
+    </p>
+  </header>
+
+  <section class="card steps">
+    <h2>How to check a round</h2>
+    <ol>
+      <li>Open <strong>Round info</strong> in the game and copy the round hash and the round number.</li>
+      <li>Paste them below, or press <strong>Verify hash</strong> in the game — it opens this page already filled in.</li>
+      <li>Compare the rows with the results the game showed. A green verdict means the hash walks back to the
+        chain anchor that was published before the chain was used.</li>
+    </ol>
+  </section>
+
+  <form id="form" class="card" novalidate>
+    <div class="grid">
+      <label class="field span-2">
+        <span>Round hash</span>
+        <input id="hash" type="text" maxlength="72" autocomplete="off" autocapitalize="off" spellcheck="false"
+               placeholder="64 hexadecimal characters" aria-describedby="hashHint">
+        <small id="hashHint">The hash shown for the round. It is the commitment to the server seed.</small>
+      </label>
+
+      <label class="field">
+        <span>Round number</span>
+        <input id="round" type="number" min="1" step="1" inputmode="numeric" placeholder="e.g. 10523">
+      </label>
+
+      <label class="field">
+        <span>Rows</span>
+        <input id="rows" type="number" min="1" max="50" step="1" inputmode="numeric" value="10">
+      </label>
+
+      <label class="field">
+        <span>Chain</span>
+        <select id="chain">
+          <option value="">Detect automatically</option>
+        </select>
+      </label>
+
+      <label class="field span-2">
+        <span>Server seed (revealed, optional)</span>
+        <input id="seed" type="text" maxlength="72" autocomplete="off" autocapitalize="off" spellcheck="false"
+               placeholder="Adds the round's own result to the table">
+        <small>The game shows this seed after the round ends. Without it the table starts one round earlier.</small>
+      </label>
+    </div>
+
+    <details class="advanced">
+      <summary>Advanced — chain not listed above</summary>
+      <div class="grid">
+        <label class="field span-2">
+          <span>Chain salt</span>
+          <input id="salt" type="text" maxlength="72" autocomplete="off" spellcheck="false" placeholder="Bitcoin block hash used by the chain">
+        </label>
+        <label class="field span-2">
+          <span>Chain anchor</span>
+          <input id="terminal" type="text" maxlength="72" autocomplete="off" spellcheck="false" placeholder="Published terminal hash of the chain">
+        </label>
+      </div>
+    </details>
+
+    <div class="actions">
+      <button id="run" class="primary" type="submit">Verify</button>
+      <button id="reset" class="ghost" type="button">Clear</button>
+      <span id="status" class="status" role="status" aria-live="polite"></span>
+    </div>
+  </form>
+
+  <section id="verdict" class="card verdict" hidden aria-live="polite"></section>
+
+  <section id="details" class="card details" hidden>
+    <h2>Round data</h2>
+    <dl id="facts" class="facts"></dl>
+    <ul id="checks" class="checks"></ul>
+    <ul id="notes" class="notes"></ul>
+  </section>
+
+  <section id="results" class="card" hidden>
+    <div class="card-head">
+      <h2>Replayed rounds</h2>
+      <span id="rowCount" class="muted"></span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Round</th>
+            <th scope="col">Hash</th>
+            <th scope="col" class="num">Result</th>
+            <th scope="col" class="num">Chain index</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>
+      Static page. Nothing is sent anywhere: the hash, the seed and the chain table are processed locally,
+      and the only network request is the one that loaded this file.
+    </p>
+    <p class="muted">
+      A hash proves the round was committed before it ran. The chain anchor proves the round belongs to a chain
+      that was committed before its first round; compare it with the anchor the game published earlier.
+    </p>
+  </footer>
+
+</main>
+
+<script src="chains.js"></script>
+<script src="verify.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

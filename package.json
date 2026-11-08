@@ -1,0 +1,10 @@
+{
+  "name": "crashtop-verifier",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static hash-chain verifier for CrashTop rounds",
+  "scripts": {
+    "test": "node --test",
+    "export": "node tools/export.mjs"
+  }
+}

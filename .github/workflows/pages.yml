@@ -1,0 +1,98 @@
+# Publishes the static verifier to GitHub Pages.
+#
+# Repository: github.com/crash-verify/crashtop-verifier
+# Site:       https://crash-verify.github.io/crashtop-verifier/
+#
+# If the repository is renamed to crash-verify.github.io (an owner site), the same workflow
+# publishes it at https://crash-verify.github.io/ with no change here: every asset is
+# referenced relatively, so the page works at the root and under a project path alike.
+#
+# One-time setup: Settings -> Pages -> Build and deployment -> Source: GitHub Actions.
+# No secret, token or environment value is needed; the job uses the short-lived GITHUB_TOKEN.
+
+name: Deploy verifier to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; a queued run waits instead of cancelling a publish in flight.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Test and assemble the site
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Test the verifier math
+        run: node --test
+
+      # chains.js is written by tools/export.mjs and served to everyone. A generator bug or
+      # a hand edit that leaks a seed stops the deployment here instead of publishing it.
+      - name: Refuse to publish a seed
+        run: node tools/check-public.mjs
+
+      - name: Assemble the site
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site
+          for file in index.html styles.css app.js verify.js worker.js chains.js; do
+            test -f "$file" || { echo "missing $file" >&2; exit 1; }
+            cp "$file" _site/
+          done
+          # Actions deployments skip Jekyll, but the marker keeps a branch-based deploy
+          # working too if the source is ever switched back.
+          : > _site/.nojekyll
+          echo "Site contents:" && ls -la _site
+
+      - name: Read the Pages base URL
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Record the deployed origin
+        run: |
+          echo "Verifier URL: ${{ steps.pages.outputs.base_url }}/" >> "$GITHUB_STEP_SUMMARY"
+          echo "Game setting: FAIR_VERIFIER_URL=${{ steps.pages.outputs.base_url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Verify locally first: node tools/check-public.mjs" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy
+    needs: build
+    # A manual run from a feature branch tests the build; only main publishes.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
