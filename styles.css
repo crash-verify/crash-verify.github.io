@@ -106,9 +106,10 @@ h1 {
 .field > span {
   color: var(--text-mute);
   font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  /* Normal case: a label reads "Round hash", never "ROUND HASH". */
+  text-transform: none;
 }
 
 .field small { color: var(--text-faint); font-size: 11.5px; }
@@ -196,9 +197,9 @@ button {
 .facts dt {
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: none;
   padding-top: 2px;
 }
 .facts dd {
@@ -252,10 +253,10 @@ thead th {
   text-align: left;
   padding: 6px 8px;
   color: var(--text-faint);
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }

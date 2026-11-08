@@ -218,7 +218,7 @@
   }
 
   function renderRows(rows) {
-    var body = $('rows');
+    var body = $('rowBody');
     body.replaceChildren();
     rows.forEach(function (row) {
       var tr = document.createElement('tr');

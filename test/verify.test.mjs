@@ -211,6 +211,24 @@ test('the first round of a chain needs its seed', () => {
   assert.equal(withSeed.rows[0].hash, chain.terminal);
 });
 
+test('the rows never reach back past the chain start', () => {
+  const chain = buildChain(400);
+  const index = 2;
+  const report = V.verifyRound({
+    hash: chain.hash(index),
+    round: FIRST_ROUND + index,
+    seed: chain.seed(index),
+    rows: 10,
+    chains: [chainEntry(chain)]
+  });
+
+  assert.equal(report.ok, true);
+  assert.equal(report.rows.length, 3);
+  assert.equal(report.rows[0].round, FIRST_ROUND + index);
+  assert.equal(report.rows[2].round, FIRST_ROUND);
+  assert.deepEqual(report.rows.map((row) => row.chainIndex), [2, 1, 0]);
+});
+
 test('an unknown hash is refused instead of guessed', () => {
   const chain = buildChain(400);
   const report = V.verifyRound({
@@ -253,4 +271,19 @@ test('the page is a static document with no network path', () => {
   assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)[^>]*>[\s\S]*?<\/script>/);
   assert.doesNotMatch(app, /\bfetch\s*\(|XMLHttpRequest|localStorage|sessionStorage/);
   assert.doesNotMatch(worker, /\bfetch\s*\(|XMLHttpRequest/);
+});
+
+test('every id in the page is unique and every lookup resolves', () => {
+  const html = fs.readFileSync(path.join(repo, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(repo, 'app.js'), 'utf8');
+
+  const ids = Array.from(html.matchAll(/\bid="([^"]+)"/g), (match) => match[1]);
+  const seen = new Set();
+  const duplicates = ids.filter((id) => (seen.has(id) ? true : (seen.add(id), false)));
+  assert.deepEqual(duplicates, [], 'the page repeats an id: ' + duplicates.join(', '));
+
+  const lookups = new Set(Array.from(app.matchAll(/\$\('([^']+)'\)/g), (match) => match[1]));
+  for (const id of lookups) {
+    assert.ok(seen.has(id), 'app.js looks up #' + id + ', which index.html does not define');
+  }
 });

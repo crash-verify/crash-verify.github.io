@@ -190,7 +190,7 @@
       checks.push({
         ok: commitmentOk,
         text: commitmentOk
-          ? 'SHA-256 of the revealed seed equals the published round hash.'
+          ? 'Hashing the revealed seed reproduces the published round hash.'
           : 'The revealed seed does not hash to the published round hash.'
       });
     }
@@ -307,7 +307,10 @@
     var rows = [];
     var source = seedBytes || hashBytes;
     var label = seedBytes ? round : round - 1;
-    for (var r = 0; r < rowsWanted && label >= 0; r++) {
+    /* Rows stop at the chain's first round. Rounds before it belong to the previous chain,
+       so this chain's seeds say nothing about their hashes. */
+    var floor = chain.firstRound != null ? chain.firstRound : 0;
+    for (var r = 0; r < rowsWanted && label >= floor; r++) {
       rows.push({
         round: label,
         hash: toHex(sha256(source)),
@@ -320,6 +323,9 @@
 
     if (!seedBytes) {
       notes.push('The entered hash is the commitment for round #' + round + ', which is the seed of round #' + (round - 1) + '. Paste the revealed server seed to replay round #' + round + ' itself.');
+    }
+    if (rows.length < rowsWanted && chain.firstRound != null) {
+      notes.push('Only ' + rows.length + (rows.length === 1 ? ' round' : ' rounds') + ' of this chain exist at or before #' + round + ', so the table is shorter than requested.');
     }
 
     var ok = checks.every(function (check) { return check.ok; });
