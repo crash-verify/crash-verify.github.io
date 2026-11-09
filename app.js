@@ -187,7 +187,7 @@
     if (chain.salt) {
       if (chain.saltHeight) {
         var link = document.createElement('a');
-        link.href = 'https://mempool.space/block-height/' + encodeURIComponent(chain.saltHeight);
+        link.href = 'https://www.blockchain.com/explorer/blocks/btc/' + encodeURIComponent(chain.saltHeight);
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.textContent = 'block ' + Number(chain.saltHeight).toLocaleString('en-US') + ' \u2197';

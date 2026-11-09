@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,6 +26,12 @@ async function fixture(body) {
 
 const anchor = 'a'.repeat(64);
 const salt = 'b'.repeat(64);
+
+test('a block height links to the blockchain.com explorer', async () => {
+  const app = await readFile(fileURLToPath(new URL('../app.js', import.meta.url)), 'utf8');
+  assert.match(app, /'https:\/\/www\.blockchain\.com\/explorer\/blocks\/btc\/' \+ encodeURIComponent\(chain\.saltHeight\)/);
+  assert.doesNotMatch(app, /mempool\.space/);
+});
 
 test('a commitment file with only published fields is accepted', async () => {
   const f = await fixture('self.CT_CHAINS = [{ "id": 7, "terminalHash": "' + anchor + '", "salt": "' + salt +
